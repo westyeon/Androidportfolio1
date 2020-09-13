@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".BookmarkActivity"
+    android:orientation="horizontal">
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="즐겨찾기"
+            android:textSize="20dp"
+            />
+         <com.google.android.material.floatingactionbutton.FloatingActionButton
+             android:id="@+id/fab2"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:layout_above="@+id/fab1"
+             android:layout_alignParentRight="true"
+             android:layout_marginBottom="15dp"
+             android:layout_marginRight="20dp"
+             android:src="@drawable/sorticon"
+             android:backgroundTint="#d46760"
+             android:clickable="true"
+             android:visibility="invisible" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/fab"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="15dp"
+            android:layout_marginRight="20dp"
+            android:backgroundTint="#d46760"
+            android:clickable="true"
+            android:src="@drawable/deleteicon"
+            android:visibility="invisible" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="20dp"
+            android:layout_marginRight="20dp"
+            android:backgroundTint="#d46760"
+            android:clickable="true"
+            android:src="@drawable/baseline_add_circle_white_48dp"
+            app:borderWidth="0dp"
+            app:fabSize="normal"
+            />
+
+
+
+</RelativeLayout>
