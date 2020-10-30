@@ -2,6 +2,7 @@ package com.example.androidportfolio1;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,12 +10,14 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Adapter;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,184 +26,170 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SearchActivity extends AppCompatActivity {
     private Spinner searchtype;
     private EditText value;
     private Button btnsearch;
+
     private ListView listview;
-
     private List<Medicine> list;
-    private ArrayAdapter<Medicine> medicineAdapter;
+    private MedicineAdapter listAdapter;
 
-    //페이지 번호와 페이지 당 데이터 개수를 저장할 변수
-    int pageNo = 1;
-    int size = 3;
+    BookMarkDB bookMarkDB;
+    Medi_BookMarkDB medi_bookmarkDB;
 
-    //조건에 맞는 데이터 개수를 저장할 변수
-    int cnt;
-
-    //출력할 내용
-    String result = "";
-
-    //스레드가 다운로드 받아서 파싱한 결과를 출력할 핸들러
-    Handler handler = new Handler(Looper.getMainLooper()){
-        @Override
-        public void handleMessage(Message message){
-
-            //list.setText(result);
-
-            //adapter를 이용해서 ListView 에 데이터가
-            //수정되었으니 다시 출력하고 신호를 보냄
-
-            //신호를 보내는 것을 프로그래밍에서는
-            //Notification이라고 합니다.
-            medicineAdapter.notifyDataSetChanged();
-        }
-    };
-    //데이터를 다운로드 받아서 파싱하는 스레드
-    class ThreadEx extends Thread{
-        //다운로드 받은 문자열을 저장할 객체
-        StringBuilder sb = new StringBuilder();
-
+    //데이터를 가져오는 스레드
+    class DownloadThread extends Thread{
         public void run(){
-            try{
-                URL url = null;
-                //콤보 박스 선택한 항목 번호를 idx에 저장
-                int idx = searchtype.getSelectedItemPosition();
-                if(idx == 0){
-                    url = new URL(
-                            "http://192.168.0.87:8080/portfolio1/list?" +
-                                    "pageno=" + pageNo);
-                }else if(idx == 1){
-                    url = new URL(
-                            "http://192.168.0.87:8080/portfolio1/list?"
-                                    + "searchtype=item_seq_num&" + "value=" +
-                                    value.getText().toString() + "&pageno="
-                                    +pageNo
-                    );
-                }else if(idx == 2){
-                    url = new URL(
-                            "http://192.168.0.87:8080/portfolio1/list?"
-                                    + "searchtype=item_name&" + "value=" +
-                                    value.getText().toString() + "&pageno="
-                                    +pageNo
-                    );
-                }else if(idx == 3) {
-                    url = new URL(
-                            "http://192.168.0.87:8080/portfolio1/list?"
-                                    + "searchtype=entp_seq&" + "value=" +
-                                    value.getText().toString() + "&pageno="
-                                    + pageNo
-                    );
-                }else if(idx == 4) {
-                    url = new URL(
-                            "http://192.168.0.87:8080/portfolio1/list?"
-                                    + "searchtype=entp_name&" + "value=" +
-                                    value.getText().toString() + "&pageno="
-                                    + pageNo
-                    );
-                }else{
-                    url = new URL(
-                            "http://192.168.0.87:8080/portfolio1/list?"
-                                    + "searchtype=edi_code&" + "value=" +
-                                    value.getText().toString() + "&pageno="
-                                    +pageNo
-                    );
-                }
+            String searchType = "";
+            //searchType에서 선택한 번호를 가지고 검색종류를 생성
+            switch (searchtype.getSelectedItemPosition()){
+                case 0:
+                    errorHandler.sendEmptyMessage(0);
+                    return;
+                case 1:
+                    searchType = "item_seq_num";
+                    break;
+                case 2:
+                    searchType = "item_name";
+                    break;
+                case 3 :
+                    searchType = "entp_seq";
+                    break;
+                case 4:
+                    searchType = "entp_name";
+                    break;
+                case 5:
+                    searchType = "edi_code";
+                    break;
 
-                HttpURLConnection con = (
-                        HttpURLConnection)url.openConnection();
-                BufferedReader br = new BufferedReader(
-                        new InputStreamReader(con.getInputStream()));
+            }
+            String keyword = value.getText().toString().trim();
+            String str = ""; //다운로드 받은 문자열을 저장
+            try {
+                String addr = "http://172.30.1.48:8080/portfolio1/medicine/list?searchtype=" + searchType + "&keyword=" + URLEncoder.encode(keyword, "utf-8");
+                URL url = new URL(addr);
+                //다운로드 받는 코드 - HttpURLConnection
+                HttpURLConnection con = (HttpURLConnection)url.openConnection();
+                con.setConnectTimeout(30000);
+                StringBuilder sb = new StringBuilder();
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 while(true){
                     String line = br.readLine();
-                    if(line == null){
+                    if(line == null)
                         break;
-                    }
-                    sb.append(line + "\n");
+                    sb.append(line);
                 }
                 br.close();
                 con.disconnect();
-
+                str = sb.toString();
+                Log.e("다운로드 받은 문자열", str);
             }catch(Exception e){
-                Log.e("다운로드 예외", e.getMessage());
+                Log.e("다운로드 에러", e.getMessage());
+
+
             }
+
+            //json 파싱
             try{
-                //객체로 변환
-                JSONObject object = new JSONObject(sb.toString());
-                //데이터 개수는 count에 숫자로 저장
-                cnt = object.getInt("count");
-                //list 키의 데이터를 배열로 가져오기
-                JSONArray ar = object.getJSONArray("list");
-                for(int i=0; i<ar.length(); i=i+1){
-                    JSONArray temp = ar.getJSONArray(i);
-                    //result = result + temp.getString(1) + "\n";
-                    Medicine medicine = new Medicine();
-                    medicine.item_seq_num = temp.getString(0);
-                    medicine.item_name = temp.getString(1);
-                    medicine.entp_seq = temp.getString(2);
-                    medicine.entp_name = temp.getString(3);
-                    medicine.chart = temp.getString(4);
-                    medicine.item_image = temp.getString(5);
-                    medicine.print_front = temp.getString(6);
-                    medicine.print_back = temp.getString(7);
-                    medicine.drug_shape = temp.getString(8);
-                    medicine.color_class1 = temp.getString(9);
-                    medicine.color_class2 = temp.getString(10);
-                    medicine.line_front = temp.getString(11);
-                    medicine.line_back = temp.getString(12);
-                    medicine.leng_long = temp.getString(13);
-                    medicine.leng_short = temp.getString(14);
-                    medicine.thick = temp.getString(15);
-                    medicine.img_regist_ts = temp.getString(16);
-                    medicine.class_no = temp.getString(17);
-                    medicine.class_name = temp.getString(18);
-                    medicine.etc_otc_name = temp.getString(19);
-                    medicine.item_permit_date = temp.getString(20);
-                    medicine.form_code_name = temp.getString(21);
-                    medicine.mark_code_front_anal = temp.getString(22);
-                    medicine.mark_code_back_anal = temp.getString(23);
-                    medicine.mark_code_front_img = temp.getString(24);
-                    medicine.mark_code_back_img = temp.getString(25);
-                    medicine.change_date = temp.getString(26);
-                    medicine.mark_code_front = temp.getString(27);
-                    medicine.mark_code_back = temp.getString(28);
-                    medicine.item_eng_name = temp.getString(29);
-                    medicine.edi_code = temp.getString(30);
-                    //list.add(item);
-                    list.add(medicine);
-                }
-                //핸들러에게 출력을 요청
-                handler.sendEmptyMessage(0);
+                if(str != null){
+                    JSONObject result = new JSONObject(str);
+                    JSONArray jsonlist = result.getJSONArray("list");
+                    list.clear();
+                    for(int i=0; i<jsonlist.length(); i=i+1){
+                        JSONObject item = jsonlist.getJSONObject(i);
+                        Medicine medicine = new Medicine();
+                        medicine.item_seq_num = item.getString("item_seq_num");
+                        medicine.item_name = item.getString("item_name");
+                        medicine.entp_seq = item.getString("entp_seq");
+                        medicine.entp_name = item.getString("entp_name");
+                        medicine.item_image = item.getString("item_image");
+                        medicine.edi_code = item.getString("edi_code");
 
+                        list.add(medicine);
+                    }
+                    Log.e("medicine", list.toString());
+
+                    BookMark bookMark = bookMarkDB.findBookMark(searchType, keyword);
+
+                    if(bookMark == null){
+                        BookMark bm = new BookMark();
+                        bm.setItem(searchType);
+                        bm.setSearch_word(keyword);
+                        bookMarkDB.addBookMark(bm);
+                        //Select * FROM bookmark WHERE item = 'entp_name' and SEARCH_WORD = '동아제약'
+                        Log.e("삽입", bm.toString());
+                    }else{
+                        bookMarkDB.updateBookMark(bookMark);
+                        Log.e("수정", bookMark.toString());
+                    }
+
+                }
             }catch(Exception e){
-                Log.e("파싱에러", e.getMessage());
+                Log.e("에러", e.getMessage());
             }
+            displayHandler.sendEmptyMessage(0);
         }
     }
 
+    //데이터를 출력하기 위한 핸들러
+    Handler displayHandler = new Handler(Looper.getMainLooper()){
+        @Override
+        public void handleMessage(Message msg){
+
+            listAdapter.notifyDataSetChanged();
+
+        }
+    };
+
+    //데이터를 출력하기 위한 핸들러
+    Handler errorHandler = new Handler(Looper.getMainLooper()){
+        @Override
+        public void handleMessage(Message msg){
+
+            Toast.makeText(SearchActivity.this,"다른 검색 항목을 선택하세요", Toast.LENGTH_LONG).show();
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-
         searchtype = (Spinner)findViewById(R.id.searchtype);
 
         ArrayAdapter<CharSequence>adapter = ArrayAdapter.createFromResource(this,R.array.searchtype_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        searchtype.setPrompt("항목을 선택하세요");
         searchtype.setAdapter(adapter);
-
-
 
         value = (EditText)findViewById(R.id.value);
         btnsearch = (Button)findViewById(R.id.btnsearch);
+
         listview = (ListView)findViewById(R.id.listview);
+        list = new ArrayList<>();
+        listAdapter = new MedicineAdapter(SearchActivity.this, list, R.layout.search_item_list, 0);
+        listview.setAdapter(listAdapter);
 
+        bookMarkDB = new BookMarkDB(SearchActivity.this, null, null, 1);
+        medi_bookmarkDB = new Medi_BookMarkDB(SearchActivity.this,null,null,1);
 
+        btnsearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new DownloadThread().start();
 
+                InputMethodManager mInputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                mInputMethodManager.hideSoftInputFromWindow(btnsearch.getWindowToken(), 0);
+            }
+        });
     }
+
+
 }

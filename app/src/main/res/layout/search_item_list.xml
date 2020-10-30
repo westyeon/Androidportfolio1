@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    >
+    
+    <ImageView
+        android:layout_width="150dp"
+        android:layout_height="80dp"
+        android:id="@+id/search_item_img"/>
+
+    <LinearLayout
+        android:layout_width="194dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/item_seq_num"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="80dp"
+            android:text="item_seq_num" />
+
+        <TextView
+            android:id="@+id/item_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="item_name" />
+        <TextView
+            android:id="@+id/entp_seq"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="entp_seq" />
+
+        <TextView
+            android:id="@+id/entp_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="entp_name" />
+
+        <TextView
+            android:id="@+id/edi_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="edi_code" />
+
+    </LinearLayout>
+
+
+    <CheckBox
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bookmark_btn"
+        android:button="@android:color/transparent"
+        android:id="@+id/bookmark_btn"/>
+
+
+</LinearLayout>

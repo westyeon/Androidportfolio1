@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <item android:state_checked="false"
+          android:drawable="@drawable/empty_bookmark"
+          android:id="@+id/bookmark_unchecked_btn"/>
+    <item android:state_checked="true"
+          android:drawable="@drawable/bookmarkicon"
+          android:id="@+id/bookmark_checked_btn" />
+
+</selector>
